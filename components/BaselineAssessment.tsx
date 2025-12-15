@@ -10,11 +10,20 @@ interface BaselineAssessmentProps {
   onClose: () => void;
 }
 
+interface AssessmentResults {
+  pitch: number;
+  pace: number;
+  volume: number;
+  toneProfile: string;
+  strengths: string[];
+  areasForImprovement: string[];
+}
+
 export default function BaselineAssessment({ onClose }: BaselineAssessmentProps) {
   const { user } = useAuth();
   const [step, setStep] = useState(1);
   const [isRecording, setIsRecording] = useState(false);
-  const [results, setResults] = useState<any>(null);
+  const [results, setResults] = useState<AssessmentResults | null>(null);
 
   const handleRecord = () => {
     setIsRecording(true);

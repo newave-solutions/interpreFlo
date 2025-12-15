@@ -13,6 +13,14 @@ interface PracticeSessionProps {
   onClose: () => void;
 }
 
+interface SessionResults {
+  pitch: number;
+  pace: number;
+  volume: number;
+  overall: number;
+  duration: number;
+}
+
 export default function PracticeSession({ scenarioId, onClose }: PracticeSessionProps) {
   const { user } = useAuth();
   const [step, setStep] = useState<'intro' | 'practice' | 'results'>('intro');
@@ -23,7 +31,7 @@ export default function PracticeSession({ scenarioId, onClose }: PracticeSession
     pace: 50,
     volume: 50,
   });
-  const [results, setResults] = useState<any>(null);
+  const [results, setResults] = useState<SessionResults | null>(null);
 
   const scenario = scenarios.find((s) => s.id === scenarioId);
 

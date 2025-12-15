@@ -45,8 +45,9 @@ export default function ProfileModal({ onClose }: ProfileModalProps) {
       setTimeout(() => {
         onClose();
       }, 1500);
-    } catch (err: any) {
-      setMessage(err.message || 'Error updating profile');
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Error updating profile';
+      setMessage(errorMessage);
     } finally {
       setLoading(false);
     }

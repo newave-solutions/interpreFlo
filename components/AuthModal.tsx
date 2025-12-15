@@ -28,20 +28,21 @@ export default function AuthModal({ onClose }: AuthModalProps) {
 
     try {
       if (mode === 'signin') {
-        const { error } = await signIn(email, password);
-        if (error) throw error;
+        const { error: signInError } = await signIn(email, password);
+        if (signInError) throw signInError;
         onClose();
       } else if (mode === 'signup') {
-        const { error } = await signUp(email, password, fullName);
-        if (error) throw error;
+        const { error: signUpError } = await signUp(email, password, fullName);
+        if (signUpError) throw signUpError;
         setMessage('Check your email to confirm your account!');
       } else if (mode === 'reset') {
-        const { error } = await resetPassword(email);
-        if (error) throw error;
+        const { error: resetError } = await resetPassword(email);
+        if (resetError) throw resetError;
         setMessage('Password reset link sent to your email!');
       }
-    } catch (err: any) {
-      setError(err.message || 'An error occurred');
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'An error occurred';
+      setError(errorMessage);
     } finally {
       setLoading(false);
     }
@@ -51,11 +52,12 @@ export default function AuthModal({ onClose }: AuthModalProps) {
     setError('');
     setLoading(true);
     try {
-      const { error } =
+      const { error: socialError } =
         provider === 'google' ? await signInWithGoogle() : await signInWithMicrosoft();
-      if (error) throw error;
-    } catch (err: any) {
-      setError(err.message || 'An error occurred');
+      if (socialError) throw socialError;
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'An error occurred';
+      setError(errorMessage);
     } finally {
       setLoading(false);
     }

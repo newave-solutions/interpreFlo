@@ -108,7 +108,7 @@ export default function ToneShiftDrills() {
             </button>
           ))}
         </div>
-      ) : (
+      ) : drill ? (
         /* Active Drill */
         <div className="space-y-6">
           <div className="bg-white rounded-lg shadow-md p-6">
@@ -183,7 +183,7 @@ export default function ToneShiftDrills() {
             )}
           </div>
         </div>
-      )}
+      ) : null}
     </div>
   );
 }

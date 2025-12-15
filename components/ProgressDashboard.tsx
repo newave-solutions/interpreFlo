@@ -1,28 +1,40 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/lib/supabase';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import Badge from './Badge';
 import { badges } from '@/data/badges';
 
+interface UserProgress {
+  total_practice_time: number;
+  scenarios_completed: number;
+  average_score: number;
+  streak_days: number;
+}
+
+interface PracticeSession {
+  id: string;
+  session_type: string;
+  duration: number;
+  overall_score: number;
+  completed_at: string;
+}
+
+interface UserBadge {
+  badge_id: string;
+  earned_at: string;
+}
+
 export default function ProgressDashboard() {
   const { user } = useAuth();
-  const [progress, setProgress] = useState<any>(null);
-  const [sessions, setSessions] = useState<any[]>([]);
-  const [userBadges, setUserBadges] = useState<any[]>([]);
+  const [progress, setProgress] = useState<UserProgress | null>(null);
+  const [sessions, setSessions] = useState<PracticeSession[]>([]);
+  const [userBadges, setUserBadges] = useState<UserBadge[]>([]);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    if (user) {
-      fetchProgress();
-      fetchSessions();
-      fetchBadges();
-    }
-  }, [user]);
-
-  const fetchProgress = async () => {
+  const fetchProgress = useCallback(async () => {
     if (!user) return;
 
     try {
@@ -37,9 +49,9 @@ export default function ProgressDashboard() {
     } catch (error) {
       console.error('Error fetching progress:', error);
     }
-  };
+  }, [user]);
 
-  const fetchSessions = async () => {
+  const fetchSessions = useCallback(async () => {
     if (!user) return;
 
     try {
@@ -57,9 +69,9 @@ export default function ProgressDashboard() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [user]);
 
-  const fetchBadges = async () => {
+  const fetchBadges = useCallback(async () => {
     if (!user) return;
 
     try {
@@ -73,7 +85,15 @@ export default function ProgressDashboard() {
     } catch (error) {
       console.error('Error fetching badges:', error);
     }
-  };
+  }, [user]);
+
+  useEffect(() => {
+    if (user) {
+      fetchProgress();
+      fetchSessions();
+      fetchBadges();
+    }
+  }, [user, fetchProgress, fetchSessions, fetchBadges]);
 
   // Prepare chart data
   const chartData = sessions
