@@ -1,0 +1,1245 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>InterpreFlo - Voice Coaching for Medical Interpreters</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary-color: #2563eb;
+            --primary-dark: #1e40af;
+            --secondary-color: #10b981;
+            --danger-color: #ef4444;
+            --warning-color: #f59e0b;
+            --bg-color: #f9fafb;
+            --card-bg: #ffffff;
+            --text-primary: #111827;
+            --text-secondary: #6b7280;
+            --border-color: #e5e7eb;
+            --shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1);
+            --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-primary);
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+
+        /* Header */
+        .header {
+            background-color: var(--card-bg);
+            box-shadow: var(--shadow);
+            padding: 1rem 0;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .header-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: var(--primary-color);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .logo::before {
+            content: '🎙️';
+            font-size: 1.75rem;
+        }
+
+        .nav-menu {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+        }
+
+        .btn {
+            padding: 0.5rem 1rem;
+            border: none;
+            border-radius: 0.375rem;
+            cursor: pointer;
+            font-size: 0.875rem;
+            font-weight: 500;
+            transition: all 0.2s;
+            text-decoration: none;
+            display: inline-block;
+        }
+
+        .btn-primary {
+            background-color: var(--primary-color);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background-color: var(--primary-dark);
+        }
+
+        .btn-secondary {
+            background-color: transparent;
+            color: var(--text-primary);
+            border: 1px solid var(--border-color);
+        }
+
+        .btn-secondary:hover {
+            background-color: var(--bg-color);
+        }
+
+        .btn-success {
+            background-color: var(--secondary-color);
+            color: white;
+        }
+
+        .btn-danger {
+            background-color: var(--danger-color);
+            color: white;
+        }
+
+        /* Auth Forms */
+        .auth-container {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem;
+        }
+
+        .auth-card {
+            background-color: var(--card-bg);
+            padding: 2rem;
+            border-radius: 0.5rem;
+            box-shadow: var(--shadow-lg);
+            width: 100%;
+            max-width: 400px;
+        }
+
+        .auth-title {
+            font-size: 1.875rem;
+            font-weight: bold;
+            text-align: center;
+            margin-bottom: 1.5rem;
+            color: var(--primary-color);
+        }
+
+        .form-group {
+            margin-bottom: 1rem;
+        }
+
+        .form-label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+            color: var(--text-primary);
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 0.5rem;
+            border: 1px solid var(--border-color);
+            border-radius: 0.375rem;
+            font-size: 1rem;
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+        }
+
+        .error-message {
+            color: var(--danger-color);
+            font-size: 0.875rem;
+            margin-top: 0.5rem;
+        }
+
+        .success-message {
+            color: var(--secondary-color);
+            font-size: 0.875rem;
+            margin-top: 0.5rem;
+        }
+
+        .auth-switch {
+            text-align: center;
+            margin-top: 1rem;
+            color: var(--text-secondary);
+        }
+
+        .auth-switch a {
+            color: var(--primary-color);
+            cursor: pointer;
+            text-decoration: none;
+        }
+
+        /* Dashboard */
+        .dashboard {
+            padding: 2rem 0;
+        }
+
+        .dashboard-header {
+            margin-bottom: 2rem;
+        }
+
+        .dashboard-title {
+            font-size: 2rem;
+            font-weight: bold;
+            margin-bottom: 0.5rem;
+        }
+
+        .dashboard-subtitle {
+            color: var(--text-secondary);
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .stat-card {
+            background-color: var(--card-bg);
+            padding: 1.5rem;
+            border-radius: 0.5rem;
+            box-shadow: var(--shadow);
+        }
+
+        .stat-label {
+            color: var(--text-secondary);
+            font-size: 0.875rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .stat-value {
+            font-size: 2rem;
+            font-weight: bold;
+            color: var(--primary-color);
+            margin-top: 0.5rem;
+        }
+
+        .stat-unit {
+            font-size: 1rem;
+            color: var(--text-secondary);
+            font-weight: normal;
+        }
+
+        /* Scenarios */
+        .scenarios-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 1.5rem;
+            margin-top: 2rem;
+        }
+
+        .scenario-card {
+            background-color: var(--card-bg);
+            padding: 1.5rem;
+            border-radius: 0.5rem;
+            box-shadow: var(--shadow);
+            transition: transform 0.2s, box-shadow 0.2s;
+            cursor: pointer;
+        }
+
+        .scenario-card:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-lg);
+        }
+
+        .scenario-title {
+            font-size: 1.25rem;
+            font-weight: bold;
+            margin-bottom: 0.5rem;
+        }
+
+        .scenario-description {
+            color: var(--text-secondary);
+            margin-bottom: 1rem;
+        }
+
+        .difficulty-badge {
+            display: inline-block;
+            padding: 0.25rem 0.75rem;
+            border-radius: 9999px;
+            font-size: 0.75rem;
+            font-weight: 500;
+            text-transform: uppercase;
+        }
+
+        .difficulty-beginner {
+            background-color: #d1fae5;
+            color: #065f46;
+        }
+
+        .difficulty-intermediate {
+            background-color: #fed7aa;
+            color: #92400e;
+        }
+
+        .difficulty-advanced {
+            background-color: #fecaca;
+            color: #991b1b;
+        }
+
+        /* Practice Session */
+        .practice-container {
+            background-color: var(--card-bg);
+            padding: 2rem;
+            border-radius: 0.5rem;
+            box-shadow: var(--shadow-lg);
+            margin-top: 2rem;
+        }
+
+        .recording-controls {
+            display: flex;
+            justify-content: center;
+            gap: 1rem;
+            margin: 2rem 0;
+        }
+
+        .record-button {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            border: none;
+            cursor: pointer;
+            font-size: 2rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: transform 0.2s;
+        }
+
+        .record-button:hover {
+            transform: scale(1.1);
+        }
+
+        .record-button.recording {
+            animation: pulse 1.5s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+
+        .analytics-panel {
+            margin-top: 2rem;
+        }
+
+        .analytics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+
+        .metric-card {
+            background-color: var(--bg-color);
+            padding: 1rem;
+            border-radius: 0.375rem;
+            text-align: center;
+        }
+
+        .metric-label {
+            color: var(--text-secondary);
+            font-size: 0.875rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .metric-value {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: var(--primary-color);
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background-color: var(--border-color);
+            border-radius: 9999px;
+            overflow: hidden;
+            margin-top: 0.5rem;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background-color: var(--primary-color);
+            transition: width 0.3s ease;
+        }
+
+        /* Session History */
+        .session-list {
+            margin-top: 2rem;
+        }
+
+        .session-item {
+            background-color: var(--card-bg);
+            padding: 1rem;
+            border-radius: 0.375rem;
+            box-shadow: var(--shadow);
+            margin-bottom: 1rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .session-info {
+            flex: 1;
+        }
+
+        .session-title {
+            font-weight: 600;
+            margin-bottom: 0.25rem;
+        }
+
+        .session-meta {
+            color: var(--text-secondary);
+            font-size: 0.875rem;
+        }
+
+        .session-score {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: var(--secondary-color);
+        }
+
+        /* Visualizations */
+        .chart-container {
+            background-color: var(--card-bg);
+            padding: 1.5rem;
+            border-radius: 0.5rem;
+            box-shadow: var(--shadow);
+            margin-top: 1rem;
+        }
+
+        .waveform {
+            width: 100%;
+            height: 100px;
+            background-color: var(--bg-color);
+            border-radius: 0.375rem;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .waveform-bar {
+            position: absolute;
+            bottom: 50%;
+            width: 2px;
+            background-color: var(--primary-color);
+            transform: translateY(50%);
+        }
+
+        /* Loading */
+        .loading {
+            text-align: center;
+            padding: 2rem;
+            color: var(--text-secondary);
+        }
+
+        .spinner {
+            border: 3px solid var(--border-color);
+            border-top-color: var(--primary-color);
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 1rem;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* Hidden */
+        .hidden {
+            display: none !important;
+        }
+
+        /* Timer */
+        .timer {
+            text-align: center;
+            font-size: 3rem;
+            font-weight: bold;
+            color: var(--primary-color);
+            margin: 2rem 0;
+            font-variant-numeric: tabular-nums;
+        }
+
+        /* Tabs */
+        .tabs {
+            display: flex;
+            gap: 0.5rem;
+            border-bottom: 2px solid var(--border-color);
+            margin-bottom: 1.5rem;
+        }
+
+        .tab {
+            padding: 0.75rem 1.5rem;
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: 500;
+            color: var(--text-secondary);
+            border-bottom: 2px solid transparent;
+            margin-bottom: -2px;
+            transition: all 0.2s;
+        }
+
+        .tab.active {
+            color: var(--primary-color);
+            border-bottom-color: var(--primary-color);
+        }
+
+        .tab:hover {
+            color: var(--primary-color);
+        }
+    </style>
+</head>
+<body>
+    <div id="app"></div>
+
+    <script>
+        // Application State
+        const state = {
+            user: null,
+            token: localStorage.getItem('token'),
+            currentView: 'login',
+            scenarios: [],
+            sessions: [],
+            progress: null,
+            stats: null,
+            currentScenario: null,
+            recording: false,
+            recordingStartTime: null,
+            audioContext: null,
+            analyser: null,
+            mediaRecorder: null,
+            recordedChunks: [],
+            analyticsData: []
+        };
+
+        // API Utilities
+        const API_URL = 'http://localhost:3001/api';
+
+        async function apiCall(endpoint, options = {}) {
+            const headers = {
+                'Content-Type': 'application/json',
+                ...options.headers
+            };
+
+            if (state.token) {
+                headers['Authorization'] = `Bearer ${state.token}`;
+            }
+
+            const response = await fetch(`${API_URL}${endpoint}`, {
+                ...options,
+                headers
+            });
+
+            if (!response.ok) {
+                const error = await response.json();
+                throw new Error(error.error || 'Request failed');
+            }
+
+            return response.json();
+        }
+
+        // Auth Functions
+        async function register(username, email, password) {
+            try {
+                await apiCall('/register', {
+                    method: 'POST',
+                    body: JSON.stringify({ username, email, password })
+                });
+                return { success: true };
+            } catch (error) {
+                return { success: false, error: error.message };
+            }
+        }
+
+        async function login(username, password) {
+            try {
+                const data = await apiCall('/login', {
+                    method: 'POST',
+                    body: JSON.stringify({ username, password })
+                });
+                state.token = data.token;
+                state.user = data.user;
+                localStorage.setItem('token', data.token);
+                return { success: true };
+            } catch (error) {
+                return { success: false, error: error.message };
+            }
+        }
+
+        function logout() {
+            state.token = null;
+            state.user = null;
+            localStorage.removeItem('token');
+            state.currentView = 'login';
+            render();
+        }
+
+        // Data Functions
+        async function loadScenarios() {
+            state.scenarios = await apiCall('/scenarios');
+        }
+
+        async function loadSessions() {
+            state.sessions = await apiCall('/sessions');
+        }
+
+        async function loadProgress() {
+            state.progress = await apiCall('/progress');
+        }
+
+        async function loadStats() {
+            state.stats = await apiCall('/stats');
+        }
+
+        async function saveSession(sessionData) {
+            return await apiCall('/sessions', {
+                method: 'POST',
+                body: JSON.stringify(sessionData)
+            });
+        }
+
+        // Audio Analysis
+        async function startRecording() {
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                
+                state.audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                state.analyser = state.audioContext.createAnalyser();
+                const source = state.audioContext.createMediaStreamSource(stream);
+                source.connect(state.analyser);
+                state.analyser.fftSize = 2048;
+
+                state.mediaRecorder = new MediaRecorder(stream);
+                state.recordedChunks = [];
+                state.analyticsData = [];
+
+                state.mediaRecorder.ondataavailable = (e) => {
+                    if (e.data.size > 0) {
+                        state.recordedChunks.push(e.data);
+                    }
+                };
+
+                state.mediaRecorder.start();
+                state.recording = true;
+                state.recordingStartTime = Date.now();
+
+                // Start analytics collection
+                analyzeAudio();
+
+                return { success: true };
+            } catch (error) {
+                return { success: false, error: error.message };
+            }
+        }
+
+        function analyzeAudio() {
+            if (!state.recording || !state.analyser) return;
+
+            const dataArray = new Uint8Array(state.analyser.frequencyBinCount);
+            state.analyser.getByteFrequencyData(dataArray);
+
+            // Calculate metrics
+            const average = dataArray.reduce((a, b) => a + b) / dataArray.length;
+            const volume = average / 255;
+            
+            // Simple pitch estimation (find dominant frequency)
+            let maxValue = 0;
+            let maxIndex = 0;
+            for (let i = 0; i < dataArray.length; i++) {
+                if (dataArray[i] > maxValue) {
+                    maxValue = dataArray[i];
+                    maxIndex = i;
+                }
+            }
+            const pitch = maxIndex / dataArray.length;
+
+            // Clarity (based on signal consistency)
+            const variance = dataArray.reduce((sum, val) => sum + Math.pow(val - average, 2), 0) / dataArray.length;
+            const clarity = Math.max(0, 1 - (variance / 10000));
+
+            state.analyticsData.push({
+                timestamp: Date.now() - state.recordingStartTime,
+                pitch: pitch,
+                volume: volume,
+                clarity: clarity
+            });
+
+            if (state.recording) {
+                requestAnimationFrame(analyzeAudio);
+            }
+        }
+
+        async function stopRecording() {
+            return new Promise((resolve) => {
+                if (!state.mediaRecorder) {
+                    resolve({ success: false });
+                    return;
+                }
+
+                state.mediaRecorder.onstop = () => {
+                    const blob = new Blob(state.recordedChunks, { type: 'audio/webm' });
+                    const reader = new FileReader();
+                    reader.onloadend = () => {
+                        const recordingData = reader.result;
+                        
+                        // Calculate averages
+                        const avgPitch = state.analyticsData.reduce((sum, d) => sum + d.pitch, 0) / state.analyticsData.length;
+                        const avgVolume = state.analyticsData.reduce((sum, d) => sum + d.volume, 0) / state.analyticsData.length;
+                        const avgClarity = state.analyticsData.reduce((sum, d) => sum + d.clarity, 0) / state.analyticsData.length;
+                        
+                        const overallScore = Math.round(((avgVolume * 0.3) + (avgClarity * 0.5) + (avgPitch * 0.2)) * 100);
+
+                        state.recording = false;
+
+                        if (state.audioContext) {
+                            state.audioContext.close();
+                        }
+
+                        resolve({
+                            success: true,
+                            data: {
+                                duration: Math.floor((Date.now() - state.recordingStartTime) / 1000),
+                                pitch_avg: avgPitch,
+                                volume_avg: avgVolume,
+                                clarity_score: avgClarity,
+                                overall_score: overallScore,
+                                recording_data: recordingData,
+                                analytics: state.analyticsData
+                            }
+                        });
+                    };
+                    reader.readAsDataURL(blob);
+                };
+
+                state.mediaRecorder.stop();
+                state.mediaRecorder.stream.getTracks().forEach(track => track.stop());
+            });
+        }
+
+        // View Rendering Functions
+        function renderHeader() {
+            if (!state.user) return '';
+
+            return `
+                <header class="header">
+                    <div class="container">
+                        <div class="header-content">
+                            <div class="logo">InterpreFlo</div>
+                            <nav class="nav-menu">
+                                <button class="btn btn-secondary" onclick="navigate('dashboard')">Dashboard</button>
+                                <button class="btn btn-secondary" onclick="navigate('practice')">Practice</button>
+                                <button class="btn btn-secondary" onclick="navigate('progress')">Progress</button>
+                                <span style="color: var(--text-secondary);">Welcome, ${state.user.username}</span>
+                                <button class="btn btn-danger" onclick="logout()">Logout</button>
+                            </nav>
+                        </div>
+                    </div>
+                </header>
+            `;
+        }
+
+        function renderLogin() {
+            return `
+                <div class="auth-container">
+                    <div class="auth-card">
+                        <h1 class="auth-title">🎙️ InterpreFlo</h1>
+                        <p style="text-align: center; color: var(--text-secondary); margin-bottom: 2rem;">
+                            Voice Coaching for Medical Interpreters
+                        </p>
+                        <form id="loginForm" onsubmit="handleLogin(event)">
+                            <div class="form-group">
+                                <label class="form-label">Username</label>
+                                <input type="text" class="form-input" name="username" required>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Password</label>
+                                <input type="password" class="form-input" name="password" required>
+                            </div>
+                            <div id="loginError" class="error-message hidden"></div>
+                            <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 1rem;">Login</button>
+                        </form>
+                        <div class="auth-switch">
+                            Don't have an account? <a onclick="navigate('register')">Register</a>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function renderRegister() {
+            return `
+                <div class="auth-container">
+                    <div class="auth-card">
+                        <h1 class="auth-title">🎙️ InterpreFlo</h1>
+                        <p style="text-align: center; color: var(--text-secondary); margin-bottom: 2rem;">
+                            Create your account
+                        </p>
+                        <form id="registerForm" onsubmit="handleRegister(event)">
+                            <div class="form-group">
+                                <label class="form-label">Username</label>
+                                <input type="text" class="form-input" name="username" required>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Email</label>
+                                <input type="email" class="form-input" name="email" required>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Password</label>
+                                <input type="password" class="form-input" name="password" required minlength="6">
+                            </div>
+                            <div id="registerError" class="error-message hidden"></div>
+                            <div id="registerSuccess" class="success-message hidden"></div>
+                            <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 1rem;">Register</button>
+                        </form>
+                        <div class="auth-switch">
+                            Already have an account? <a onclick="navigate('login')">Login</a>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function renderDashboard() {
+            if (!state.stats) return '<div class="loading"><div class="spinner"></div>Loading...</div>';
+
+            const { progress, recent_sessions, scores_by_scenario } = state.stats;
+            const hours = Math.floor(progress.total_practice_time / 3600);
+            const minutes = Math.floor((progress.total_practice_time % 3600) / 60);
+
+            return `
+                ${renderHeader()}
+                <div class="container dashboard">
+                    <div class="dashboard-header">
+                        <h1 class="dashboard-title">Dashboard</h1>
+                        <p class="dashboard-subtitle">Track your progress and performance</p>
+                    </div>
+
+                    <div class="stats-grid">
+                        <div class="stat-card">
+                            <div class="stat-label">Total Sessions</div>
+                            <div class="stat-value">${progress.total_sessions}</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-label">Practice Time</div>
+                            <div class="stat-value">${hours}h ${minutes}m</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-label">Average Score</div>
+                            <div class="stat-value">${Math.round(progress.average_score)}<span class="stat-unit">%</span></div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-label">Scenarios Completed</div>
+                            <div class="stat-value">${progress.scenarios_completed}</div>
+                        </div>
+                    </div>
+
+                    <div class="chart-container">
+                        <h2 style="margin-bottom: 1rem;">Recent Sessions</h2>
+                        <div class="session-list">
+                            ${recent_sessions.length > 0 ? recent_sessions.map(session => {
+                                const scenario = state.scenarios.find(s => s.id === session.scenario_id);
+                                const date = new Date(session.created_at).toLocaleDateString();
+                                return `
+                                    <div class="session-item">
+                                        <div class="session-info">
+                                            <div class="session-title">${scenario ? scenario.title : session.scenario_id}</div>
+                                            <div class="session-meta">${date}</div>
+                                        </div>
+                                        <div class="session-score">${Math.round(session.overall_score)}%</div>
+                                    </div>
+                                `;
+                            }).join('') : '<p style="color: var(--text-secondary);">No sessions yet. Start practicing!</p>'}
+                        </div>
+                    </div>
+
+                    ${scores_by_scenario.length > 0 ? `
+                        <div class="chart-container">
+                            <h2 style="margin-bottom: 1rem;">Performance by Scenario</h2>
+                            <div class="analytics-grid">
+                                ${scores_by_scenario.map(item => {
+                                    const scenario = state.scenarios.find(s => s.id === item.scenario_id);
+                                    return `
+                                        <div class="metric-card">
+                                            <div class="metric-label">${scenario ? scenario.title : item.scenario_id}</div>
+                                            <div class="metric-value">${Math.round(item.avg_score)}%</div>
+                                            <div style="color: var(--text-secondary); font-size: 0.875rem; margin-top: 0.5rem;">
+                                                ${item.count} session${item.count !== 1 ? 's' : ''}
+                                            </div>
+                                        </div>
+                                    `;
+                                }).join('')}
+                            </div>
+                        </div>
+                    ` : ''}
+                </div>
+            `;
+        }
+
+        function renderPractice() {
+            return `
+                ${renderHeader()}
+                <div class="container dashboard">
+                    <div class="dashboard-header">
+                        <h1 class="dashboard-title">Practice Scenarios</h1>
+                        <p class="dashboard-subtitle">Choose a scenario to practice your interpretation skills</p>
+                    </div>
+
+                    <div class="scenarios-grid">
+                        ${state.scenarios.map(scenario => `
+                            <div class="scenario-card" onclick="startPractice('${scenario.id}')">
+                                <h3 class="scenario-title">${scenario.title}</h3>
+                                <p class="scenario-description">${scenario.description}</p>
+                                <div style="margin-top: 1rem; display: flex; justify-content: space-between; align-items: center;">
+                                    <span class="difficulty-badge difficulty-${scenario.difficulty}">${scenario.difficulty}</span>
+                                    <span style="color: var(--text-secondary); font-size: 0.875rem;">${scenario.duration}s</span>
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+            `;
+        }
+
+        function renderPracticeSession() {
+            if (!state.currentScenario) return '';
+
+            const scenario = state.scenarios.find(s => s.id === state.currentScenario);
+            if (!scenario) return '';
+
+            return `
+                ${renderHeader()}
+                <div class="container dashboard">
+                    <div class="practice-container">
+                        <h2 style="text-align: center; margin-bottom: 1rem;">${scenario.title}</h2>
+                        <p style="text-align: center; color: var(--text-secondary); margin-bottom: 2rem;">
+                            ${scenario.description}
+                        </p>
+
+                        <div style="background-color: var(--bg-color); padding: 1.5rem; border-radius: 0.5rem; margin-bottom: 2rem;">
+                            <h3 style="margin-bottom: 0.5rem;">Scenario Script:</h3>
+                            <p style="font-style: italic; color: var(--text-primary);">"${scenario.script}"</p>
+                        </div>
+
+                        <div id="timer" class="timer">00:00</div>
+
+                        <div class="recording-controls">
+                            <button id="recordButton" class="record-button btn-danger" onclick="toggleRecording()">
+                                ⏺️
+                            </button>
+                        </div>
+
+                        <div id="analyticsPanel" class="analytics-panel hidden">
+                            <h3 style="margin-bottom: 1rem;">Real-time Vocal Analysis</h3>
+                            <div class="analytics-grid">
+                                <div class="metric-card">
+                                    <div class="metric-label">Volume</div>
+                                    <div id="volumeMetric" class="metric-value">0%</div>
+                                    <div class="progress-bar">
+                                        <div id="volumeProgress" class="progress-fill" style="width: 0%"></div>
+                                    </div>
+                                </div>
+                                <div class="metric-card">
+                                    <div class="metric-label">Clarity</div>
+                                    <div id="clarityMetric" class="metric-value">0%</div>
+                                    <div class="progress-bar">
+                                        <div id="clarityProgress" class="progress-fill" style="width: 0%"></div>
+                                    </div>
+                                </div>
+                                <div class="metric-card">
+                                    <div class="metric-label">Pitch</div>
+                                    <div id="pitchMetric" class="metric-value">0%</div>
+                                    <div class="progress-bar">
+                                        <div id="pitchProgress" class="progress-fill" style="width: 0%"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div style="text-align: center; margin-top: 2rem;">
+                            <button class="btn btn-secondary" onclick="navigate('practice')">Back to Scenarios</button>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function renderProgress() {
+            if (!state.progress) return '<div class="loading"><div class="spinner"></div>Loading...</div>';
+
+            const completedCount = state.progress.scenarios_completed ? state.progress.scenarios_completed.length : 0;
+            const totalScenarios = state.scenarios.length;
+            const completionPercent = Math.round((completedCount / totalScenarios) * 100);
+
+            return `
+                ${renderHeader()}
+                <div class="container dashboard">
+                    <div class="dashboard-header">
+                        <h1 class="dashboard-title">Your Progress</h1>
+                        <p class="dashboard-subtitle">Track your learning journey</p>
+                    </div>
+
+                    <div class="chart-container">
+                        <h2 style="margin-bottom: 1rem;">Overall Progress</h2>
+                        <div class="stats-grid">
+                            <div class="stat-card">
+                                <div class="stat-label">Completion Rate</div>
+                                <div class="stat-value">${completionPercent}<span class="stat-unit">%</span></div>
+                                <div class="progress-bar" style="margin-top: 1rem;">
+                                    <div class="progress-fill" style="width: ${completionPercent}%"></div>
+                                </div>
+                            </div>
+                            <div class="stat-card">
+                                <div class="stat-label">Total Sessions</div>
+                                <div class="stat-value">${state.progress.total_sessions}</div>
+                            </div>
+                            <div class="stat-card">
+                                <div class="stat-label">Average Score</div>
+                                <div class="stat-value">${Math.round(state.progress.average_score)}<span class="stat-unit">%</span></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="chart-container">
+                        <h2 style="margin-bottom: 1rem;">Scenario Progress</h2>
+                        <div class="scenarios-grid">
+                            ${state.scenarios.map(scenario => {
+                                const completed = state.progress.scenarios_completed && state.progress.scenarios_completed.includes(scenario.id);
+                                return `
+                                    <div class="scenario-card" style="opacity: ${completed ? 1 : 0.6}">
+                                        <h3 class="scenario-title">
+                                            ${completed ? '✓ ' : ''}${scenario.title}
+                                        </h3>
+                                        <p class="scenario-description">${scenario.description}</p>
+                                        <span class="difficulty-badge difficulty-${scenario.difficulty}">${scenario.difficulty}</span>
+                                    </div>
+                                `;
+                            }).join('')}
+                        </div>
+                    </div>
+
+                    <div class="chart-container">
+                        <h2 style="margin-bottom: 1rem;">Recent Activity</h2>
+                        <div class="session-list">
+                            ${state.sessions.slice(0, 10).map(session => {
+                                const scenario = state.scenarios.find(s => s.id === session.scenario_id);
+                                const date = new Date(session.created_at).toLocaleDateString();
+                                const time = new Date(session.created_at).toLocaleTimeString();
+                                return `
+                                    <div class="session-item">
+                                        <div class="session-info">
+                                            <div class="session-title">${scenario ? scenario.title : session.scenario_id}</div>
+                                            <div class="session-meta">${date} at ${time} • ${Math.floor(session.duration / 60)}m ${session.duration % 60}s</div>
+                                        </div>
+                                        <div class="session-score">${Math.round(session.overall_score)}%</div>
+                                    </div>
+                                `;
+                            }).join('')}
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        // Event Handlers
+        async function handleLogin(event) {
+            event.preventDefault();
+            const form = event.target;
+            const username = form.username.value;
+            const password = form.password.value;
+
+            const result = await login(username, password);
+            
+            if (result.success) {
+                await loadScenarios();
+                navigate('dashboard');
+            } else {
+                const errorEl = document.getElementById('loginError');
+                errorEl.textContent = result.error;
+                errorEl.classList.remove('hidden');
+            }
+        }
+
+        async function handleRegister(event) {
+            event.preventDefault();
+            const form = event.target;
+            const username = form.username.value;
+            const email = form.email.value;
+            const password = form.password.value;
+
+            const result = await register(username, email, password);
+            
+            const errorEl = document.getElementById('registerError');
+            const successEl = document.getElementById('registerSuccess');
+            
+            if (result.success) {
+                errorEl.classList.add('hidden');
+                successEl.textContent = 'Registration successful! You can now login.';
+                successEl.classList.remove('hidden');
+                setTimeout(() => navigate('login'), 2000);
+            } else {
+                successEl.classList.add('hidden');
+                errorEl.textContent = result.error;
+                errorEl.classList.remove('hidden');
+            }
+        }
+
+        function startPractice(scenarioId) {
+            state.currentScenario = scenarioId;
+            state.currentView = 'practice-session';
+            render();
+        }
+
+        let timerInterval;
+
+        async function toggleRecording() {
+            const button = document.getElementById('recordButton');
+            const analyticsPanel = document.getElementById('analyticsPanel');
+            
+            if (!state.recording) {
+                const result = await startRecording();
+                if (result.success) {
+                    button.textContent = '⏹️';
+                    button.classList.add('recording');
+                    analyticsPanel.classList.remove('hidden');
+                    
+                    // Start timer
+                    let seconds = 0;
+                    timerInterval = setInterval(() => {
+                        seconds++;
+                        const mins = Math.floor(seconds / 60);
+                        const secs = seconds % 60;
+                        document.getElementById('timer').textContent = 
+                            `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+                        
+                        // Update metrics
+                        if (state.analyticsData.length > 0) {
+                            const latest = state.analyticsData[state.analyticsData.length - 1];
+                            const volumePercent = Math.round(latest.volume * 100);
+                            const clarityPercent = Math.round(latest.clarity * 100);
+                            const pitchPercent = Math.round(latest.pitch * 100);
+                            
+                            document.getElementById('volumeMetric').textContent = volumePercent + '%';
+                            document.getElementById('clarityMetric').textContent = clarityPercent + '%';
+                            document.getElementById('pitchMetric').textContent = pitchPercent + '%';
+                            
+                            document.getElementById('volumeProgress').style.width = volumePercent + '%';
+                            document.getElementById('clarityProgress').style.width = clarityPercent + '%';
+                            document.getElementById('pitchProgress').style.width = pitchPercent + '%';
+                        }
+                    }, 1000);
+                }
+            } else {
+                clearInterval(timerInterval);
+                button.classList.remove('recording');
+                
+                const result = await stopRecording();
+                if (result.success) {
+                    // Save session
+                    await saveSession({
+                        scenario_id: state.currentScenario,
+                        ...result.data
+                    });
+                    
+                    // Show results and navigate
+                    alert(`Session Complete!\n\nYour Score: ${result.data.overall_score}%\n\nVolume: ${Math.round(result.data.volume_avg * 100)}%\nClarity: ${Math.round(result.data.clarity_score * 100)}%\nPitch: ${Math.round(result.data.pitch_avg * 100)}%`);
+                    
+                    navigate('dashboard');
+                }
+            }
+        }
+
+        // Navigation
+        async function navigate(view) {
+            state.currentView = view;
+            
+            if (view === 'dashboard') {
+                await Promise.all([loadStats(), loadProgress()]);
+            } else if (view === 'practice') {
+                if (state.scenarios.length === 0) {
+                    await loadScenarios();
+                }
+            } else if (view === 'progress') {
+                await Promise.all([loadProgress(), loadSessions()]);
+            }
+            
+            render();
+        }
+
+        // Main Render
+        function render() {
+            const app = document.getElementById('app');
+            
+            let content;
+            switch (state.currentView) {
+                case 'login':
+                    content = renderLogin();
+                    break;
+                case 'register':
+                    content = renderRegister();
+                    break;
+                case 'dashboard':
+                    content = renderDashboard();
+                    break;
+                case 'practice':
+                    content = renderPractice();
+                    break;
+                case 'practice-session':
+                    content = renderPracticeSession();
+                    break;
+                case 'progress':
+                    content = renderProgress();
+                    break;
+                default:
+                    content = renderLogin();
+            }
+            
+            app.innerHTML = content;
+        }
+
+        // Initialize
+        async function init() {
+            if (state.token) {
+                try {
+                    await loadScenarios();
+                    state.currentView = 'dashboard';
+                } catch (error) {
+                    // Token invalid, logout
+                    logout();
+                }
+            }
+            render();
+        }
+
+        // Start the app
+        init();
+    </script>
+</body>
+</html>
