@@ -4,12 +4,18 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const Database = require('better-sqlite3');
 const path = require('path');
-const session = require('express-session');
 const rateLimit = require('express-rate-limit');
+const crypto = require('crypto');
 
 const app = express();
 const PORT = process.env.PORT || 3001;
-const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key-change-in-production';
+
+// Generate a secure random secret if not provided via environment variable
+const JWT_SECRET = process.env.JWT_SECRET || (() => {
+  console.warn('WARNING: JWT_SECRET not set in environment. Generating a random secret for this session.');
+  console.warn('For production, set JWT_SECRET environment variable to persist sessions across restarts.');
+  return crypto.randomBytes(64).toString('hex');
+})();
 
 // Initialize database
 const db = new Database('interpreflo.db');
@@ -63,8 +69,13 @@ db.exec(`
 `);
 
 // Middleware
+// CORS configuration - allow development and production origins
+const allowedOrigins = process.env.ALLOWED_ORIGINS 
+  ? process.env.ALLOWED_ORIGINS.split(',') 
+  : ['http://localhost:3000', 'http://localhost:3001'];
+
 app.use(cors({
-  origin: ['http://localhost:3000', 'http://localhost:3001'],
+  origin: allowedOrigins,
   credentials: true
 }));
 app.use(express.json({ limit: '50mb' }));
