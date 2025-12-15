@@ -5,6 +5,7 @@ const jwt = require('jsonwebtoken');
 const Database = require('better-sqlite3');
 const path = require('path');
 const session = require('express-session');
+const rateLimit = require('express-rate-limit');
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -69,6 +70,19 @@ app.use(cors({
 app.use(express.json({ limit: '50mb' }));
 app.use(express.static(path.join(__dirname, 'public')));
 
+// Rate limiting
+const authLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 10, // Limit each IP to 10 requests per windowMs
+  message: 'Too many authentication attempts, please try again later.'
+});
+
+const apiLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 100, // Limit each IP to 100 requests per windowMs
+  message: 'Too many requests, please try again later.'
+});
+
 // Authentication middleware
 const authenticateToken = (req, res, next) => {
   const authHeader = req.headers['authorization'];
@@ -88,7 +102,7 @@ const authenticateToken = (req, res, next) => {
 };
 
 // Auth routes
-app.post('/api/register', async (req, res) => {
+app.post('/api/register', authLimiter, async (req, res) => {
   try {
     const { username, email, password } = req.body;
 
@@ -117,7 +131,7 @@ app.post('/api/register', async (req, res) => {
   }
 });
 
-app.post('/api/login', async (req, res) => {
+app.post('/api/login', authLimiter, async (req, res) => {
   try {
     const { username, password } = req.body;
 
@@ -196,11 +210,11 @@ const scenarios = [
   }
 ];
 
-app.get('/api/scenarios', authenticateToken, (req, res) => {
+app.get('/api/scenarios', apiLimiter, authenticateToken, (req, res) => {
   res.json(scenarios);
 });
 
-app.get('/api/scenarios/:id', authenticateToken, (req, res) => {
+app.get('/api/scenarios/:id', apiLimiter, authenticateToken, (req, res) => {
   const scenario = scenarios.find(s => s.id === req.params.id);
   if (!scenario) {
     return res.status(404).json({ error: 'Scenario not found.' });
@@ -209,7 +223,7 @@ app.get('/api/scenarios/:id', authenticateToken, (req, res) => {
 });
 
 // Practice session routes
-app.post('/api/sessions', authenticateToken, (req, res) => {
+app.post('/api/sessions', apiLimiter, authenticateToken, (req, res) => {
   try {
     const { scenario_id, duration, pitch_avg, volume_avg, clarity_score, overall_score, recording_data, analytics } = req.body;
 
@@ -268,7 +282,7 @@ app.post('/api/sessions', authenticateToken, (req, res) => {
   }
 });
 
-app.get('/api/sessions', authenticateToken, (req, res) => {
+app.get('/api/sessions', apiLimiter, authenticateToken, (req, res) => {
   try {
     const sessions = db.prepare(`
       SELECT id, scenario_id, duration, pitch_avg, volume_avg, clarity_score, overall_score, created_at
@@ -284,7 +298,7 @@ app.get('/api/sessions', authenticateToken, (req, res) => {
   }
 });
 
-app.get('/api/sessions/:id', authenticateToken, (req, res) => {
+app.get('/api/sessions/:id', apiLimiter, authenticateToken, (req, res) => {
   try {
     const session = db.prepare(`
       SELECT * FROM practice_sessions 
@@ -309,7 +323,7 @@ app.get('/api/sessions/:id', authenticateToken, (req, res) => {
 });
 
 // Progress routes
-app.get('/api/progress', authenticateToken, (req, res) => {
+app.get('/api/progress', apiLimiter, authenticateToken, (req, res) => {
   try {
     const progress = db.prepare('SELECT * FROM user_progress WHERE user_id = ?').get(req.user.id);
 
@@ -331,7 +345,7 @@ app.get('/api/progress', authenticateToken, (req, res) => {
 });
 
 // Dashboard stats
-app.get('/api/stats', authenticateToken, (req, res) => {
+app.get('/api/stats', apiLimiter, authenticateToken, (req, res) => {
   try {
     const progress = db.prepare('SELECT * FROM user_progress WHERE user_id = ?').get(req.user.id);
     
