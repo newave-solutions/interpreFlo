@@ -3,7 +3,8 @@
 import React, { useState } from 'react';
 import { X } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
-import { supabase } from '@/lib/supabase';
+import { doc, setDoc, serverTimestamp } from 'firebase/firestore';
+import { db } from '@/lib/firebase';
 import VocalMeter from './VocalMeter';
 
 interface BaselineAssessmentProps {
@@ -47,15 +48,16 @@ export default function BaselineAssessment({ onClose }: BaselineAssessmentProps)
     if (!user || !results) return;
 
     try {
-      await supabase.from('baseline_assessments').upsert({
-        user_id: user.id,
+      await setDoc(doc(db, 'baseline_assessments', user.uid), {
+        user_id: user.uid,
         pitch_baseline: results.pitch,
         pace_baseline: results.pace,
         volume_baseline: results.volume,
         tone_profile: results.toneProfile,
         strengths: results.strengths,
         areas_for_improvement: results.areasForImprovement,
-      });
+        completed_at: serverTimestamp(),
+      }, { merge: true });
       onClose();
     } catch (error) {
       console.error('Error saving baseline:', error);

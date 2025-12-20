@@ -2,7 +2,17 @@
 
 import React, { useEffect, useState, useCallback } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
-import { supabase } from '@/lib/supabase';
+import { 
+  doc, 
+  getDoc, 
+  collection, 
+  query, 
+  where, 
+  orderBy, 
+  limit, 
+  getDocs 
+} from 'firebase/firestore';
+import { db } from '@/lib/firebase';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import Badge from './Badge';
 import { badges } from '@/data/badges';
@@ -38,14 +48,17 @@ export default function ProgressDashboard() {
     if (!user) return;
 
     try {
-      const { data, error } = await supabase
-        .from('user_progress')
-        .select('*')
-        .eq('user_id', user.id)
-        .single();
-
-      if (error) throw error;
-      setProgress(data);
+      const progressDoc = await getDoc(doc(db, 'user_progress', user.uid));
+      
+      if (progressDoc.exists()) {
+        const data = progressDoc.data();
+        setProgress({
+          total_practice_time: data.total_practice_time || 0,
+          scenarios_completed: data.scenarios_completed || 0,
+          average_score: data.average_score || 0,
+          streak_days: data.streak_days || 0,
+        });
+      }
     } catch (error) {
       console.error('Error fetching progress:', error);
     }
@@ -55,15 +68,26 @@ export default function ProgressDashboard() {
     if (!user) return;
 
     try {
-      const { data, error } = await supabase
-        .from('practice_sessions')
-        .select('*')
-        .eq('user_id', user.id)
-        .order('completed_at', { ascending: false })
-        .limit(7);
-
-      if (error) throw error;
-      setSessions(data || []);
+      const sessionsQuery = query(
+        collection(db, 'practice_sessions'),
+        where('user_id', '==', user.uid),
+        orderBy('completed_at', 'desc'),
+        limit(7)
+      );
+      
+      const querySnapshot = await getDocs(sessionsQuery);
+      const sessionsData = querySnapshot.docs.map((doc) => {
+        const data = doc.data();
+        return {
+          id: doc.id,
+          session_type: data.session_type || '',
+          duration: data.duration || 0,
+          overall_score: data.overall_score || 0,
+          completed_at: data.completed_at?.toDate?.()?.toISOString() || new Date().toISOString(),
+        };
+      });
+      
+      setSessions(sessionsData);
     } catch (error) {
       console.error('Error fetching sessions:', error);
     } finally {
@@ -75,13 +99,21 @@ export default function ProgressDashboard() {
     if (!user) return;
 
     try {
-      const { data, error } = await supabase
-        .from('user_badges')
-        .select('*')
-        .eq('user_id', user.id);
-
-      if (error) throw error;
-      setUserBadges(data || []);
+      const badgesQuery = query(
+        collection(db, 'user_badges'),
+        where('user_id', '==', user.uid)
+      );
+      
+      const querySnapshot = await getDocs(badgesQuery);
+      const badgesData = querySnapshot.docs.map((doc) => {
+        const data = doc.data();
+        return {
+          badge_id: data.badge_id || '',
+          earned_at: data.earned_at?.toDate?.()?.toISOString() || new Date().toISOString(),
+        };
+      });
+      
+      setUserBadges(badgesData);
     } catch (error) {
       console.error('Error fetching badges:', error);
     }

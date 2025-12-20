@@ -1,13 +1,31 @@
 'use client';
 
 import React, { createContext, useContext, useEffect, useState } from 'react';
-import { User, Session, AuthError } from '@supabase/supabase-js';
-import { supabase } from '@/lib/supabase';
+import { 
+  User as FirebaseUser, 
+  onAuthStateChanged,
+  signInWithEmailAndPassword,
+  createUserWithEmailAndPassword,
+  signOut as firebaseSignOut,
+  GoogleAuthProvider,
+  signInWithPopup,
+  OAuthProvider,
+  sendPasswordResetEmail,
+  AuthError
+} from 'firebase/auth';
+import { 
+  doc, 
+  getDoc, 
+  setDoc, 
+  updateDoc, 
+  serverTimestamp 
+} from 'firebase/firestore';
+import { auth, db } from '@/lib/firebase';
 import { UserProfile } from '@/types';
 
 interface AuthContextType {
-  user: User | null;
-  session: Session | null;
+  user: FirebaseUser | null;
+  session: FirebaseUser | null; // Firebase doesn't have sessions like Supabase, using user instead
   profile: UserProfile | null;
   loading: boolean;
   signIn: (email: string, password: string) => Promise<{ error: AuthError | null }>;
@@ -22,50 +40,61 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [user, setUser] = useState<User | null>(null);
-  const [session, setSession] = useState<Session | null>(null);
+  const [user, setUser] = useState<FirebaseUser | null>(null);
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Get initial session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      setUser(session?.user ?? null);
-      if (session?.user) {
-        fetchProfile(session.user.id);
-      } else {
-        setLoading(false);
-      }
-    });
-
     // Listen for auth changes
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
-      setSession(session);
-      setUser(session?.user ?? null);
-      if (session?.user) {
-        fetchProfile(session.user.id);
+    const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
+      setUser(firebaseUser);
+      if (firebaseUser) {
+        await fetchProfile(firebaseUser.uid);
       } else {
         setProfile(null);
         setLoading(false);
       }
     });
 
-    return () => subscription.unsubscribe();
+    return () => unsubscribe();
   }, []);
 
   const fetchProfile = async (userId: string) => {
     try {
-      const { data, error } = await supabase
-        .from('user_profiles')
-        .select('*')
-        .eq('id', userId)
-        .single();
-
-      if (error) throw error;
-      setProfile(data);
+      const profileDoc = await getDoc(doc(db, 'user_profiles', userId));
+      
+      if (profileDoc.exists()) {
+        const data = profileDoc.data();
+        setProfile({
+          id: profileDoc.id,
+          email: data.email || '',
+          full_name: data.full_name,
+          organization: data.organization,
+          job_title: data.job_title,
+          experience_level: data.experience_level,
+          languages: data.languages || [],
+          avatar_url: data.avatar_url,
+          created_at: data.created_at?.toDate?.()?.toISOString() || new Date().toISOString(),
+          updated_at: data.updated_at?.toDate?.()?.toISOString() || new Date().toISOString(),
+        });
+      } else {
+        // Create profile if it doesn't exist (for existing users)
+        const user = auth.currentUser;
+        if (user) {
+          const newProfile: UserProfile = {
+            id: user.uid,
+            email: user.email || '',
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString(),
+          };
+          await setDoc(doc(db, 'user_profiles', user.uid), {
+            ...newProfile,
+            created_at: serverTimestamp(),
+            updated_at: serverTimestamp(),
+          });
+          setProfile(newProfile);
+        }
+      }
     } catch (error) {
       console.error('Error fetching profile:', error);
     } finally {
@@ -74,75 +103,149 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   const signIn = async (email: string, password: string) => {
-    const { error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    });
-    return { error };
+    try {
+      await signInWithEmailAndPassword(auth, email, password);
+      return { error: null };
+    } catch (error) {
+      return { error: error as AuthError };
+    }
   };
 
   const signUp = async (email: string, password: string, fullName: string) => {
-    const { error } = await supabase.auth.signUp({
-      email,
-      password,
-      options: {
-        data: {
-          full_name: fullName,
-        },
-      },
-    });
-    return { error };
+    try {
+      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+      const user = userCredential.user;
+
+      // Create user profile in Firestore
+      const profileData: Omit<UserProfile, 'id'> = {
+        email: user.email || email,
+        full_name: fullName,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      };
+
+      await setDoc(doc(db, 'user_profiles', user.uid), {
+        ...profileData,
+        created_at: serverTimestamp(),
+        updated_at: serverTimestamp(),
+      });
+
+      // Create user progress entry
+      await setDoc(doc(db, 'user_progress', user.uid), {
+        user_id: user.uid,
+        total_practice_time: 0,
+        scenarios_completed: 0,
+        average_score: 0,
+        streak_days: 0,
+        created_at: serverTimestamp(),
+        updated_at: serverTimestamp(),
+      });
+
+      return { error: null };
+    } catch (error) {
+      return { error: error as AuthError };
+    }
   };
 
   const signInWithGoogle = async () => {
-    const { error } = await supabase.auth.signInWithOAuth({
-      provider: 'google',
-      options: {
-        redirectTo: `${window.location.origin}/auth/callback`,
-      },
-    });
-    return { error };
+    try {
+      const provider = new GoogleAuthProvider();
+      const userCredential = await signInWithPopup(auth, provider);
+      
+      // Create profile if doesn't exist
+      const profileDoc = await getDoc(doc(db, 'user_profiles', userCredential.user.uid));
+      if (!profileDoc.exists()) {
+        await setDoc(doc(db, 'user_profiles', userCredential.user.uid), {
+          email: userCredential.user.email || '',
+          full_name: userCredential.user.displayName || '',
+          avatar_url: userCredential.user.photoURL || '',
+          created_at: serverTimestamp(),
+          updated_at: serverTimestamp(),
+        });
+        
+        // Create user progress entry
+        await setDoc(doc(db, 'user_progress', userCredential.user.uid), {
+          user_id: userCredential.user.uid,
+          total_practice_time: 0,
+          scenarios_completed: 0,
+          average_score: 0,
+          streak_days: 0,
+          created_at: serverTimestamp(),
+          updated_at: serverTimestamp(),
+        });
+      }
+      
+      return { error: null };
+    } catch (error) {
+      return { error: error as AuthError };
+    }
   };
 
   const signInWithMicrosoft = async () => {
-    const { error } = await supabase.auth.signInWithOAuth({
-      provider: 'azure',
-      options: {
-        redirectTo: `${window.location.origin}/auth/callback`,
-      },
-    });
-    return { error };
+    try {
+      const provider = new OAuthProvider('microsoft.com');
+      const userCredential = await signInWithPopup(auth, provider);
+      
+      // Create profile if doesn't exist
+      const profileDoc = await getDoc(doc(db, 'user_profiles', userCredential.user.uid));
+      if (!profileDoc.exists()) {
+        await setDoc(doc(db, 'user_profiles', userCredential.user.uid), {
+          email: userCredential.user.email || '',
+          full_name: userCredential.user.displayName || '',
+          avatar_url: userCredential.user.photoURL || '',
+          created_at: serverTimestamp(),
+          updated_at: serverTimestamp(),
+        });
+        
+        // Create user progress entry
+        await setDoc(doc(db, 'user_progress', userCredential.user.uid), {
+          user_id: userCredential.user.uid,
+          total_practice_time: 0,
+          scenarios_completed: 0,
+          average_score: 0,
+          streak_days: 0,
+          created_at: serverTimestamp(),
+          updated_at: serverTimestamp(),
+        });
+      }
+      
+      return { error: null };
+    } catch (error) {
+      return { error: error as AuthError };
+    }
   };
 
   const signOut = async () => {
-    await supabase.auth.signOut();
+    await firebaseSignOut(auth);
   };
 
   const resetPassword = async (email: string) => {
-    const { error } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: `${window.location.origin}/reset-password`,
-    });
-    return { error };
+    try {
+      await sendPasswordResetEmail(auth, email);
+      return { error: null };
+    } catch (error) {
+      return { error: error as AuthError };
+    }
   };
 
   const updateProfile = async (updates: Partial<UserProfile>) => {
     if (!user) return { error: new Error('Not authenticated') };
 
-    const { error } = await supabase
-      .from('user_profiles')
-      .update(updates)
-      .eq('id', user.id);
-
-    if (!error) {
-      await fetchProfile(user.id);
+    try {
+      await updateDoc(doc(db, 'user_profiles', user.uid), {
+        ...updates,
+        updated_at: serverTimestamp(),
+      });
+      await fetchProfile(user.uid);
+      return { error: null };
+    } catch (error) {
+      return { error: error as Error };
     }
-
-    return { error };
   };
 
   const value = {
     user,
-    session,
+    session: user, // Firebase uses user instead of session
     profile,
     loading,
     signIn,

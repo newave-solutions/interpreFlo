@@ -1,17 +1,11 @@
-import { createClient } from '@supabase/supabase-js';
 import { NextResponse } from 'next/server';
 
+// Firebase Auth handles OAuth callbacks automatically via popup/redirect flow
+// This route can redirect users after authentication
 export async function GET(request: Request) {
   const requestUrl = new URL(request.url);
-  const code = requestUrl.searchParams.get('code');
-
-  if (code) {
-    const supabase = createClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-    );
-    await supabase.auth.exchangeCodeForSession(code);
-  }
-
+  
+  // Firebase Auth will automatically complete the OAuth flow
+  // Just redirect to the practice page
   return NextResponse.redirect(new URL('/practice', requestUrl.origin));
 }

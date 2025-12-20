@@ -3,7 +3,18 @@
 import React, { useState, useEffect } from 'react';
 import { X } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
-import { supabase } from '@/lib/supabase';
+import { 
+  collection, 
+  addDoc, 
+  doc, 
+  getDoc, 
+  updateDoc, 
+  serverTimestamp,
+  query,
+  where,
+  getDocs
+} from 'firebase/firestore';
+import { db } from '@/lib/firebase';
 import { scenarios } from '@/data/scenarios';
 import WaveformVisualizer from './WaveformVisualizer';
 import VocalMeter from './VocalMeter';
@@ -77,8 +88,9 @@ export default function PracticeSession({ scenarioId, onClose }: PracticeSession
     // Save to database
     if (user) {
       try {
-        await supabase.from('practice_sessions').insert({
-          user_id: user.id,
+        // Save practice session
+        await addDoc(collection(db, 'practice_sessions'), {
+          user_id: user.uid,
           session_type: 'scenario',
           scenario_id: scenarioId,
           duration: elapsedTime,
@@ -86,38 +98,40 @@ export default function PracticeSession({ scenarioId, onClose }: PracticeSession
           pace_score: avgPace,
           volume_score: avgVolume,
           overall_score: overallScore,
+          completed_at: serverTimestamp(),
+          created_at: serverTimestamp(),
         });
 
         // Update user progress
-        const { data: progress } = await supabase
-          .from('user_progress')
-          .select('*')
-          .eq('user_id', user.id)
-          .single();
+        const progressRef = doc(db, 'user_progress', user.uid);
+        const progressDoc = await getDoc(progressRef);
 
-        if (progress) {
-          await supabase
-            .from('user_progress')
-            .update({
-              total_practice_time: (progress.total_practice_time || 0) + elapsedTime,
-              scenarios_completed: (progress.scenarios_completed || 0) + 1,
-              average_score: Math.round(
-                ((progress.average_score || 0) * (progress.scenarios_completed || 0) + overallScore) /
-                  ((progress.scenarios_completed || 0) + 1)
-              ),
-              last_practice_date: new Date().toISOString().split('T')[0],
-            })
-            .eq('user_id', user.id);
-        }
+        if (progressDoc.exists()) {
+          const progressData = progressDoc.data();
+          const currentTotalTime = progressData.total_practice_time || 0;
+          const currentSessions = progressData.scenarios_completed || 0;
+          const currentAvgScore = progressData.average_score || 0;
 
-        // Check for badges
-        if (progress.scenarios_completed === 0) {
-          await supabase.from('user_badges').insert({
-            user_id: user.id,
-            badge_id: 'first-session',
-            badge_name: 'First Steps',
-            badge_description: 'Complete your first practice session',
+          await updateDoc(progressRef, {
+            total_practice_time: currentTotalTime + elapsedTime,
+            scenarios_completed: currentSessions + 1,
+            average_score: Math.round(
+              (currentAvgScore * currentSessions + overallScore) / (currentSessions + 1)
+            ),
+            last_practice_date: new Date().toISOString().split('T')[0],
+            updated_at: serverTimestamp(),
           });
+
+          // Check for badges
+          if (currentSessions === 0) {
+            await addDoc(collection(db, 'user_badges'), {
+              user_id: user.uid,
+              badge_id: 'first-session',
+              badge_name: 'First Steps',
+              badge_description: 'Complete your first practice session',
+              earned_at: serverTimestamp(),
+            });
+          }
         }
       } catch (error) {
         console.error('Error saving session:', error);
